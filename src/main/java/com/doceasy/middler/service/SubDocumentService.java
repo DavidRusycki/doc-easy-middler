@@ -2,7 +2,9 @@ package com.doceasy.middler.service;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,15 +26,18 @@ public class SubDocumentService {
 	 * @return
 	 * @throws IOException 
 	 */
-	public Boolean insertSubDocumentsFromDocument(List<InputStream> list, Document document) throws IOException {
+	public List<UUID> insertSubDocumentsFromDocument(List<InputStream> list, Document document) throws IOException {
+		List<UUID> listInserts = new ArrayList<UUID>();
+		
 		for (InputStream inputStream : list) {
 			SubDocument sub = new SubDocument();
 			sub.setUuidDocumento(document.getUuid());
 			sub.setContent(inputStream.readAllBytes());
-			repository.save(sub);
+			SubDocument inserted = repository.save(sub);
+			listInserts.add(inserted.getUuid());
 		}	
 		
-		return true;
+		return listInserts;
 	}
 	
 }

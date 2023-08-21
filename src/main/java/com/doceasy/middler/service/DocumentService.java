@@ -2,6 +2,7 @@ package com.doceasy.middler.service;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.doceasy.middler.dto.DocumentDTO;
+import com.doceasy.middler.dto.FileProcessQueueDTO;
 import com.doceasy.middler.entity.Document;
 import com.doceasy.middler.enums.DocumentStatusEnum;
 import com.doceasy.middler.repository.DocumentRepository;
@@ -28,6 +30,9 @@ public class DocumentService {
 	@Autowired
 	private SubDocumentService subDocumentService;
 	
+	@Autowired
+	private FileProcessQueueService fileProcessQueueService;
+	
 	/**
 	 * Realiza o processamento de arquivos
 	 * @param listMultipart
@@ -44,7 +49,12 @@ public class DocumentService {
 		if (document == null) {
 			document = this.insertDocument(hash);
 			List<InputStream> list = Document.getListInputStream(listMultipart);
-			subDocumentService.insertSubDocumentsFromDocument(list, document);
+			List<UUID> listInserts = subDocumentService.insertSubDocumentsFromDocument(list, document);
+			
+			FileProcessQueueDTO queueDto = new FileProcessQueueDTO();
+			queueDto.setUuidDocument(document.getUuid());
+			queueDto.setListUuidSubDocuments(listInserts);
+			fileProcessQueueService.publish(queueDto);
 		}
 		
 		result = Document.toDTO(document);
