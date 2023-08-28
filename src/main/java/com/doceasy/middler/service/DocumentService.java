@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -60,6 +61,17 @@ public class DocumentService {
 		result = Document.toDTO(document);
 		
 		return result;
+	}
+	
+	public Document findById(UUID uuid) throws Exception {
+		Optional<Document> optional = repository.findById(uuid);
+		Document document = optional.get();
+		
+		if (document.getStatus() == DocumentStatusEnum.EM_FILA.getValue()) {
+			throw new Exception("documento ainda nao esta pronto, volte mais tarde");
+		}
+		
+		return document;
 	}
 	
 	/**
