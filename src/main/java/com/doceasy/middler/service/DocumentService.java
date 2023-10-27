@@ -9,10 +9,14 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.doceasy.middler.dto.DocumentDTO;
+import com.doceasy.middler.dto.ErrorResponseDTO;
 import com.doceasy.middler.dto.FileProcessQueueDTO;
 import com.doceasy.middler.entity.Document;
 import com.doceasy.middler.enums.DocumentStatusEnum;
@@ -67,10 +71,6 @@ public class DocumentService {
 		Optional<Document> optional = repository.findById(uuid);
 		Document document = optional.get();
 		
-		if (document.getStatus() == DocumentStatusEnum.EM_FILA.getValue()) {
-			throw new Exception("documento ainda nao esta pronto, volte mais tarde");
-		}
-		
 		return document;
 	}
 	
@@ -88,6 +88,32 @@ public class DocumentService {
 		repository.save(document);
 		
 		return document;
+	}
+	
+	public ResponseEntity getResponse(UUID uuid) throws Exception {
+		Document document = this.findById(uuid);
+		
+		ResponseEntity response = null;	
+				
+		switch (DocumentStatusEnum.getFromInteger(document.getStatus())) {
+			case FINALIZADO:
+				response = ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).body(document.getContent());
+				break;
+	
+			case EM_FILA:
+				response = ResponseEntity.ok("O documento ainda está em processamento. Tente novamente mais tarde.");
+				break;
+			
+			case ERRO:
+				response = ResponseEntity.ok("Houve um erro ao processar o documento. Tente enviar novamente.");
+				break;
+				
+			default:
+				break;
+		}
+		
+		return response;
+		
 	}
 	
 }
